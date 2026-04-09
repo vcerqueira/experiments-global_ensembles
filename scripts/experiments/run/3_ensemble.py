@@ -25,19 +25,24 @@ df, horizon, n_lags, freq, seas_len = ChronosDataset.load_everything(target)
 # pprint(dt)
 
 RESULTS_PATH = Path('../../../assets/results_cv')
+# RESULTS_PATH = Path('./assets/results_cv')
 ENSEMBLE_RESULTS_PATH = Path('../../../assets/results')
+# ENSEMBLE_RESULTS_PATH = Path('./assets/results')
 
 train, test = ChronosDataset.time_wise_split(df, horizon)
 
 if __name__ == '__main__':
 
     # ---- model setup
-    fcst_cv = pd.read_csv(RESULTS_PATH / f'{target},insample-base-fcst.csv')
-    fcst = pd.read_csv(RESULTS_PATH / f'{target},base-fcst.csv')
+    fcst_cv = pd.read_csv(RESULTS_PATH / f'{target},insample-base-fcst.csv', parse_dates=['ds'])
+    fcst = pd.read_csv(RESULTS_PATH / f'{target},base-fcst.csv', parse_dates=['ds'])
+
+    fcst_cv.drop(columns=['index'], inplace=True)
+    fcst.drop(columns=['index'], inplace=True)
 
     # ---- fitting ensembles
     combiners_by_uid = {
-        'ADE': ADE(freq=freq, meta_lags=list(range(1, n_lags+1)), trim_ratio=TRIM_R, trim_by_uid=True),
+        'ADE': ADE(freq=freq, meta_lags=list(range(1, n_lags + 1)), trim_ratio=TRIM_R, trim_by_uid=True),
         'MLpol': MLpol(loss_type='square', gradient=True, trim_ratio=TRIM_R, weight_by_uid=True),
         'MLewa': MLewa(loss_type='square', gradient=True, trim_ratio=TRIM_R, weight_by_uid=True),
         'LossOnTrain': LossOnTrain(trim_ratio=TRIM_R, weight_by_uid=True),
@@ -48,7 +53,7 @@ if __name__ == '__main__':
     }
 
     combiners_uncond = {
-        'ADE': ADE(freq=freq, meta_lags=list(range(1, n_lags+1)), trim_ratio=TRIM_R, trim_by_uid=False),
+        'ADE': ADE(freq=freq, meta_lags=list(range(1, n_lags + 1)), trim_ratio=TRIM_R, trim_by_uid=False),
         'MLpol': MLpol(loss_type='square', gradient=True, trim_ratio=TRIM_R, weight_by_uid=False),
         'MLewa': MLewa(loss_type='square', gradient=True, trim_ratio=TRIM_R, weight_by_uid=False),
         'LossOnTrain': LossOnTrain(trim_ratio=TRIM_R, weight_by_uid=False),
