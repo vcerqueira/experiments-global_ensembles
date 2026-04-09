@@ -11,7 +11,7 @@ from src.neuralnets import BaseModelsConfig
 warnings.filterwarnings("ignore")
 
 # ---- data loading and partitioning
-target = 'monash_tourism_monthly'
+target = 'monash_tourism_quarterly'
 df, horizon, n_lags, freq, seas_len = ChronosDataset.load_everything(target)
 # df, horizon, _, freq, seas_len = LongHorizonDatasetR.load_everything(target, resample_to='D')
 
