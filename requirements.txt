@@ -8,7 +8,6 @@ neuralforecast==1.7.5
 numpy==1.26.4
 pandas==2.2.3
 plotnine==0.13.6
-rpy2==3.5.16
 scikit-learn==1.5.2
 statsforecast==1.7.8
 statsmodels==0.14.3

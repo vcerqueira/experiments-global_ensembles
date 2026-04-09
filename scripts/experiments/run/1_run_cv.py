@@ -1,5 +1,5 @@
 import warnings
-
+from pathlib import Path
 from statsforecast import StatsForecast
 from statsforecast.models import SeasonalNaive
 
@@ -20,7 +20,7 @@ df, horizon, n_lags, freq, seas_len = ChronosDataset.load_everything(target)
 # dt = ChronosDataset.get_chronos_datasets_names()
 # pprint(dt)
 
-RESULTS_PATH = '../../assets/results_cv'
+RESULTS_PATH = Path('../../../assets/results_cv')
 
 train, _ = ChronosDataset.time_wise_split(df, horizon)
 
@@ -29,6 +29,7 @@ if __name__ == '__main__':
     print(RESULTS_PATH.absolute())
     models_sf = [SeasonalNaive(season_length=seas_len)]
     models_nf = BaseModelsConfig.get_nf_models(horizon=horizon,
+                                               try_mps=False,
                                                input_size=n_lags,
                                                limit_epochs=False)
 
@@ -37,7 +38,7 @@ if __name__ == '__main__':
 
     # ---- cv forecasts
     n_windows = train['unique_id'].value_counts().min() - n_lags - horizon
-    # n_windows = int(n_windows // 2)
+    n_windows = int(n_windows // 2)
 
     # h=2 hack
     fcst_cv_sf = sf.cross_validation(df=train, n_windows=n_windows, step_size=1, h=2)

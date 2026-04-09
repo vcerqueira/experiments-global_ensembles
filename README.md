@@ -1,5 +1,7 @@
 # Dynamic Ensembles for Global Time Series Forecasting
 
+need tp update requirements...upgrade nf, and add datasets, dotenv
+
 This repository contains the code and data for experiments on dynamic 
 ensembles for global time series forecasting.
 
