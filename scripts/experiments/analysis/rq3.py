@@ -7,7 +7,7 @@ import matplotlib
 # matplotlib.use('TkAgg')
 matplotlib.use('agg')
 
-from utils.workflows.plots import Plots
+from src.plots import Plots
 
 pd.set_option('display.max_columns', None)
 

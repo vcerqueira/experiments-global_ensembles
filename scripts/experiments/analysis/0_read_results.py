@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from utils.workflows.results import ResultAnalysis
+from src.result_analysis import ResultAnalysis
 
 METRIC = 'smape'
 DIR = 'assets/results'

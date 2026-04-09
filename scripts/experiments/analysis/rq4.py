@@ -1,5 +1,3 @@
-import re
-
 import pandas as pd
 import plotnine as p9
 import matplotlib
@@ -7,8 +5,8 @@ import matplotlib
 # matplotlib.use('TkAgg')
 matplotlib.use('agg')
 
-from utils.workflows.plots import Plots
-from utils.workflows.results import ResultAnalysis
+from src.plots import Plots
+from src.result_analysis import ResultAnalysis
 
 pd.set_option('display.max_columns', None)
 
