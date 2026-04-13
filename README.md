@@ -24,6 +24,9 @@ The datasets are not included in this repository due to size constraints.
 
 ## Methods
 
+https://arxiv.org/pdf/2511.05460
+
+
 WIP
 
 ## Code Structure

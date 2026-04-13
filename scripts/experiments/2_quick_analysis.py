@@ -1,12 +1,15 @@
+from pathlib import Path
+
 import pandas as pd
 
 from src.result_analysis import ResultAnalysis
-from src.config import OUTPUT_DIRECTORY
 
-data_name, group, h = 'M3', 'Yearly', 4
+OUTPUT_DIRECTORY = Path('./assets/results')
+
+ds = 'monash_m3_monthly'
 # data_name, group, h = 'Gluonts', 'electricity_weekly', 12
 
-results = pd.read_csv(f'{OUTPUT_DIRECTORY}/{data_name}_{group}_{h}.csv', parse_dates=['ds'])
+results = pd.read_csv(f'{OUTPUT_DIRECTORY}/{ds},ensemble-fcst.csv', parse_dates=['ds'])
 
 evaluator = ResultAnalysis('smape')
 

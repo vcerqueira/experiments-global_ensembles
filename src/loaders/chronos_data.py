@@ -29,6 +29,7 @@ class ChronosDataset(DatasetLoader):
     HORIZON_MAP = {
         "Y": 3,
         "Q": 4,
+        "QE": 4,
         "M": 12,
         "MS": 12,
         "ME": 12,
@@ -50,6 +51,7 @@ class ChronosDataset(DatasetLoader):
     FREQUENCY_MAP = {
         "Y": 1,
         "Q": 4,
+        "QE": 4,
         "M": 12,
         "MS": 12,
         "ME": 12,
@@ -67,7 +69,7 @@ class ChronosDataset(DatasetLoader):
         'monash_m1_quarterly': 'Q',
         'monash_m1_yearly': 'Y',
         'monash_m3_monthly': 'M',
-        'monash_m3_quarterly': 'Q',
+        'monash_m3_quarterly': 'QE',
         'monash_m3_yearly': 'Y',
         'monash_tourism_monthly': 'M',
         'monash_tourism_quarterly': 'Q',
