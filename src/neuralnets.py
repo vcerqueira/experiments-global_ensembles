@@ -36,21 +36,19 @@ from neuralforecast.models import (GRU,
                                    TCN,
                                    DilatedRNN)
 
-from src.config_pool_dft import NEURAL_CONFIG_POOL
-
 
 class ModelsConfig:
     AUTO_MODEL_CLASSES = {
-        'AutoTFT': AutoTFT,
+        # 'AutoTFT': AutoTFT,
         'AutoNBEATS': AutoNBEATS,
-        'AutoTiDE': AutoTiDE,
-        'AutoNLinear': AutoNLinear,
-        'AutoKAN': AutoKAN,
+        # 'AutoTiDE': AutoTiDE,
+        # 'AutoNLinear': AutoNLinear,
+        # 'AutoKAN': AutoKAN,
         'AutoMLP': AutoMLP,
-        'AutoDLinear': AutoDLinear,
-        'AutoNHITS': AutoNHITS,
-        'AutoDeepNPTS': AutoDeepNPTS,
-        'AutoPatchTST': AutoPatchTST,
+        # 'AutoDLinear': AutoDLinear,
+        # 'AutoNHITS': AutoNHITS,
+        # 'AutoDeepNPTS': AutoDeepNPTS,
+        # 'AutoPatchTST': AutoPatchTST,
     }
 
     MODEL_CLASSES = {
@@ -81,7 +79,7 @@ class ModelsConfig:
 
         models = []
         for mod_name, mod in cls.AUTO_MODEL_CLASSES.items():
-            config = deepcopy(NEURAL_CONFIG_POOL[mod_name])
+            config = deepcopy(mod.default_config)
             config['accelerator'] = engine
 
             # mod.default_config['accelerator'] = engine
@@ -144,6 +142,27 @@ class ModelsConfig:
                     continue
 
         return scores
+
+    @classmethod
+    def _get_best_configs_from_folds(cls, fold_scores: List) -> List:
+        folds_fl = [item for sublist in fold_scores for item in sublist]
+
+        folds_df = pd.DataFrame(folds_fl)
+
+        folds_avg = folds_df.groupby(['model', 'hash_value']).mean(numeric_only=True)
+
+        best_configs = folds_avg.loc[folds_avg.groupby('model')['loss'].idxmin()].reset_index()
+
+        optim_models = []
+        for idx, row in best_configs.iterrows():
+            config_inst = folds_df.query("model == @row['model'] and hash_value == @row['hash_value']")
+            config = config_inst.iloc[0]['config']
+
+            opm_mod = cls.MODEL_CLASSES[row['model']](**config)
+
+            optim_models.append(opm_mod)
+
+        return optim_models
 
     @classmethod
     def get_best_configs(cls, nf: Union[NeuralForecast, List]) -> List:

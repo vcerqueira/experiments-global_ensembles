@@ -12,7 +12,7 @@ def _env_bool(name: str, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "y"}
 
 
-DRY_RUN = False
+DRY_RUN = True
 
 TRIM_R = 0.6
 SEED = 123

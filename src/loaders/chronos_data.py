@@ -62,7 +62,7 @@ class ChronosDataset(DatasetLoader):
     }
 
     FREQUENCY_MAP_DATASETS = {
-        'monash_m1_monthly': 'M',
+        'monash_m1_monthly': 'ME',
         'monash_m1_quarterly': 'Q',
         'monash_m1_yearly': 'Y',
         'monash_m3_monthly': 'M',

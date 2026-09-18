@@ -6,62 +6,61 @@ from statsforecast.models import SeasonalNaive
 from neuralforecast import NeuralForecast
 
 from src.loaders import ChronosDataset, LongHorizonDatasetR
-from src.neuralnets import BaseModelsConfig
-
-
-# merge with 2_ and add ins
+from src.neuralnets import ModelsConfig
+from src.config import ENGINE, LIMIT_EPOCHS, N_SAMPLES
 
 warnings.filterwarnings("ignore")
 
 # ---- data loading and partitioning
-target = 'monash_m3_monthly'
-df, horizon, n_lags, freq, seas_len = ChronosDataset.load_everything(target)
-# df, horizon, _, freq, seas_len = LongHorizonDatasetR.load_everything(target, resample_to='D')
+target = 'monash_m1_monthly'
+# _, horizon, n_lags, _, _ = LongHorizonDatasetR.load_everything(target, resample_to='D')
+_, horizon, n_lags, _, _ = ChronosDataset.load_everything(target)
+df, horizon, n_lags, freq, seas_len = ChronosDataset.load_everything(target, min_n_instances=2 * (n_lags + horizon))
+# df, horizon, n_lags, freq, seas_len = LongHorizonDatasetR.load_everything(target,
+#                                                                           min_n_instances=2 * (n_lags + horizon),
+#                                                                           resample_to='D')
 
-# df['unique_id'].value_counts().value_counts().sort_index()
-# from pprint import pprint
-# dt = ChronosDataset.get_chronos_datasets_names()
-# pprint(dt)
 
 RESULTS_PATH = Path('../../../assets/results_cv')
 
 train, _ = ChronosDataset.time_wise_split(df, horizon)
 
-# ---- model setup
 if __name__ == '__main__':
     print(RESULTS_PATH.absolute())
     models_sf = [SeasonalNaive(season_length=seas_len)]
-    models_nf = BaseModelsConfig.get_nf_models(horizon=horizon,
-                                               try_mps=False,
-                                               input_size=n_lags,
-                                               limit_epochs=False)
+    models_nf = ModelsConfig.get_auto_nf_models(horizon=horizon,
+                                                engine=ENGINE,
+                                                limit_epochs=LIMIT_EPOCHS,
+                                                n_samples=N_SAMPLES)
 
     sf = StatsForecast(models=models_sf, freq=freq, n_jobs=1, )
     nf = NeuralForecast(models=models_nf, freq=freq)
 
-    # fazer auto fit
-    # get best
-    # fit best
-    # get insample
-    # run cv with best
+    nf.fit(train)
+    sf.fit(train)
 
-    # ---- cv forecasts
+    optim_models = ModelsConfig.get_best_configs(nf)
+
+    fcst_sf = sf.predict(h=horizon)
+    fcst_nf = nf.predict()
+
+    fcst = fcst_nf.merge(fcst_sf, on=['unique_id', 'ds'])
+
+    fcst.to_csv(RESULTS_PATH / f'{target},base-fcst.csv', index=False)
+
+    fcst_nf_ins = nf.predict_insample(step_size=1)
+    fcst_nf_ins = fcst_nf_ins.groupby(['unique_id', 'cutoff']).head(1).drop(columns='cutoff').reset_index(drop=True)
+
+    fcst_nf_ins.to_csv(RESULTS_PATH / f'{target},base-insampletrain-fcst.csv', index=False)
+
+    # CV with best configs
+    nf_cv = NeuralForecast(models=optim_models, freq=freq)
     n_windows = train['unique_id'].value_counts().min() - n_lags - horizon
     n_windows = int(n_windows // 2)
 
-    # h=2 hack
-    fcst_cv_sf = sf.cross_validation(df=train, n_windows=n_windows, step_size=1, h=2)
-    fcst_cv_sf = fcst_cv_sf.reset_index()
-    fcst_cv_sf = fcst_cv_sf.groupby(['unique_id', 'cutoff']).head(1).drop(columns='cutoff')
-    fcst_cv_sf = fcst_cv_sf.reset_index(drop=True)
+    fcst_cv_nf = nf_cv.cross_validation(df=train,
+                                        n_windows=n_windows,
+                                        step_size=1)
+    fcst_cv_nf = fcst_cv_nf.groupby(['unique_id', 'cutoff']).head(1).drop(columns='cutoff').reset_index(drop=True)
 
-    # todo use nf.predict_insample(step_size=1) ???
-    fcst_cv_nf = nf.cross_validation(df=train,
-                                     n_windows=n_windows,
-                                     step_size=1)
-    fcst_cv_nf = fcst_cv_nf.groupby(['unique_id', 'cutoff']).head(1).drop(columns='cutoff')
-    fcst_cv_nf = fcst_cv_nf.reset_index(drop=True)
-
-    fcst_cv = fcst_cv_nf.merge(fcst_cv_sf.drop(columns='y'), on=['unique_id', 'ds'])
-
-    fcst_cv.to_csv(RESULTS_PATH / f'{target},insample-base-fcst.csv', index=False)
+    fcst_cv_nf.to_csv(RESULTS_PATH / f'{target},base-insamplecv-fcst.csv', index=False)
