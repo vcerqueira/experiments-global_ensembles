@@ -36,29 +36,12 @@ if __name__ == '__main__':
     sf = StatsForecast(models=models_sf, freq=freq, n_jobs=1, )
     nf = NeuralForecast(models=models_nf, freq=freq)
 
-    # fazer auto fit
-    # get best
-    # fit best
-    # get insample
-    # run cv with best
+    sf.fit(df=train)
+    nf.fit(df=train)
 
-    # ---- cv forecasts
-    n_windows = train['unique_id'].value_counts().min() - n_lags - horizon
-    n_windows = int(n_windows // 2)
+    fcst_sf = sf.predict(h=horizon)
+    fcst_ml = nf.predict()
 
-    # h=2 hack
-    fcst_cv_sf = sf.cross_validation(df=train, n_windows=n_windows, step_size=1, h=2)
-    fcst_cv_sf = fcst_cv_sf.reset_index()
-    fcst_cv_sf = fcst_cv_sf.groupby(['unique_id', 'cutoff']).head(1).drop(columns='cutoff')
-    fcst_cv_sf = fcst_cv_sf.reset_index(drop=True)
+    fcst = fcst_ml.merge(fcst_sf, on=['unique_id', 'ds']).reset_index()
 
-    # todo use nf.predict_insample(step_size=1) ???
-    fcst_cv_nf = nf.cross_validation(df=train,
-                                     n_windows=n_windows,
-                                     step_size=1)
-    fcst_cv_nf = fcst_cv_nf.groupby(['unique_id', 'cutoff']).head(1).drop(columns='cutoff')
-    fcst_cv_nf = fcst_cv_nf.reset_index(drop=True)
-
-    fcst_cv = fcst_cv_nf.merge(fcst_cv_sf.drop(columns='y'), on=['unique_id', 'ds'])
-
-    fcst_cv.to_csv(RESULTS_PATH / f'{target},insample-base-fcst.csv', index=False)
+    fcst.to_csv(RESULTS_PATH / f'{target},base-fcst.csv', index=False)

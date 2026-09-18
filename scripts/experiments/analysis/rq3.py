@@ -1,8 +1,9 @@
 import re
 
-import pandas as pd
-import plotnine as p9
 import matplotlib
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 # matplotlib.use('TkAgg')
 matplotlib.use('agg')
@@ -27,7 +28,7 @@ scores_df = pd.read_csv('assets/scores_avg.csv').set_index(['Data', 'Frequency']
 
 avg_unc = scores_df[ENSEMBLES]
 avg_uid = scores_df[ENSEMBLES_UID]
-avg_uid.columns = [re.sub('\(uid\)', '', x) for x in avg_uid.columns]
+avg_uid.columns = [re.sub(r'\(uid\)', '', x) for x in avg_uid.columns]
 
 delta = avg_unc.mean() - avg_uid.mean()
 
@@ -36,17 +37,18 @@ delta.columns = ['Model', 'SMAPE difference']
 delta['Model'] = pd.Categorical(delta['Model'].values.tolist(),
                                 categories=delta['Model'].values.tolist())
 
-plot = \
-    p9.ggplot(data=delta,
-              mapping=p9.aes(x='Model',
-                             y='SMAPE difference')) + \
-    p9.geom_bar(position='dodge',
-                stat='identity',
-                width=0.9,
-                fill='#8d021f') + \
-    Plots.get_theme() + \
-    p9.theme(axis_title_y=p9.element_text(size=14),
-             axis_text=p9.element_text(size=13)) + \
-    p9.labs(x='', y='SMAPE difference')
-
-plot.save('assets/outputs/plot3.pdf', width=12, height=5)
+Plots.get_theme()
+fig, ax = plt.subplots(figsize=(12, 5))
+sns.barplot(
+    data=delta,
+    x='Model',
+    y='SMAPE difference',
+    color='#8d021f',
+    width=0.9,
+    ax=ax,
+)
+ax.set_xlabel('')
+ax.set_ylabel('SMAPE difference', fontsize=14)
+ax.tick_params(labelsize=13)
+fig.savefig('assets/outputs/plot3.pdf', bbox_inches='tight')
+plt.close(fig)

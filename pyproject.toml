@@ -1,16 +1,31 @@
 [project]
 name = "experiments-global-ensembles"
 version = "0.1.0"
-description = "Add your description here"
+description = "Dynamic ensembles for global time series forecasting"
+readme = "README.md"
 authors = [
     { name = "Vitor Cerqueira", email = "cerqueira.vitormanuel@gmail.com" }
 ]
-requires-python = ">=3.12"
-dependencies = []
-
-[project.scripts]
-experiments-global-ensembles = "experiments_global_ensembles:main"
+requires-python = ">=3.11"
+dependencies = [
+    "catboost",
+    "datasets",
+    "datasetsforecast",
+    "matplotlib",
+    "metaforecast",
+    "neuralforecast",
+    "numpy",
+    "pandas",
+    "python-dotenv",
+    "scikit-learn",
+    "seaborn",
+    "setuptools>=68,<81",
+    "statsforecast",
+]
 
 [build-system]
-requires = ["uv_build>=0.12.15,<0.13.0"]
-build-backend = "uv_build"
+requires = ["setuptools>=68.0,<81"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

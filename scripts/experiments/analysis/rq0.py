@@ -1,6 +1,7 @@
-import pandas as pd
-import plotnine as p9
 import matplotlib
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 # matplotlib.use('TkAgg')
 matplotlib.use('agg')
@@ -31,14 +32,26 @@ ord = avg_rank.sort_values('value')['variable'].values
 
 base_ranks['variable'] = pd.Categorical(base_ranks['variable'], categories=ord)
 
-plot = \
-    p9.ggplot(data=base_ranks,
-              mapping=p9.aes(x='variable', y='value')) + \
-    p9.geom_violin(fill='#8d021f') + \
-    p9.stat_summary(fun_data='mean_cl_boot', color="yellow") + \
-    Plots.get_theme() + \
-    p9.theme(axis_title_y=p9.element_text(size=14),
-             axis_text=p9.element_text(size=14)) + \
-    p9.labs(x='', y='Rank')
-
-plot.save('assets/outputs/plot0.pdf', width=12, height=5)
+Plots.get_theme()
+fig, ax = plt.subplots(figsize=(12, 5))
+sns.violinplot(
+    data=base_ranks,
+    x='variable',
+    y='value',
+    color='#8d021f',
+    inner=None,
+    ax=ax,
+)
+sns.pointplot(
+    data=base_ranks,
+    x='variable',
+    y='value',
+    color='yellow',
+    errorbar=('ci', 95),
+    ax=ax,
+)
+ax.set_xlabel('')
+ax.set_ylabel('Rank', fontsize=14)
+ax.tick_params(labelsize=14)
+fig.savefig('assets/outputs/plot0.pdf', bbox_inches='tight')
+plt.close(fig)

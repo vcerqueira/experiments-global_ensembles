@@ -1,6 +1,7 @@
-import pandas as pd
-import plotnine as p9
 import matplotlib
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
 
 # matplotlib.use('TkAgg')
 matplotlib.use('agg')
@@ -33,20 +34,21 @@ es_df.columns = ['Model', 'SMAPE(ES)']
 es_df['Model'] = pd.Categorical(es_df['Model'].values.tolist(),
                                 categories=es_df['Model'].values.tolist())
 
-plot = \
-    p9.ggplot(data=es_df,
-              mapping=p9.aes(x='Model',
-                             y='SMAPE(ES)')) + \
-    p9.geom_bar(position='dodge',
-                stat='identity',
-                width=0.9,
-                fill='#8d021f') + \
-    Plots.get_theme() + \
-    p9.theme(axis_title_y=p9.element_text(size=14),
-             axis_text=p9.element_text(size=13)) + \
-    p9.labs(x='', y='SMAPE')
-
-plot.save('assets/outputs/plot4.pdf', width=12, height=5)
+Plots.get_theme()
+fig, ax = plt.subplots(figsize=(12, 5))
+sns.barplot(
+    data=es_df,
+    x='Model',
+    y='SMAPE(ES)',
+    color='#8d021f',
+    width=0.9,
+    ax=ax,
+)
+ax.set_xlabel('')
+ax.set_ylabel('SMAPE', fontsize=14)
+ax.tick_params(labelsize=13)
+fig.savefig('assets/outputs/plot4.pdf', bbox_inches='tight')
+plt.close(fig)
 
 # + --- horizon
 
@@ -63,21 +65,26 @@ hf['Type'] = 'Multi-step ahead'
 horizon_df = pd.concat([h1, hf])
 horizon_df = horizon_df.melt(['Type', 'Model']).drop(columns='variable')
 
-plot = p9.ggplot(data=horizon_df,
-                 mapping=p9.aes(x='Model',
-                                y='value',
-                                fill='Type')) + \
-       p9.facet_grid('~Type') + \
-       p9.geom_bar(position='dodge',
-                   stat='identity',
-                   width=0.9) + \
-       Plots.get_theme() + \
-       p9.theme(axis_text_x=p9.element_text(angle=60, size=13),
-                strip_text=p9.element_text(size=13)) + \
-       p9.labs(x='', y='SMAPE') + \
-       p9.guides(fill=False) + \
-       p9.scale_fill_manual(values=['#23395d', '#8da9c4'])
+g = sns.catplot(
+    data=horizon_df,
+    x='Model',
+    y='value',
+    hue='Type',
+    col='Type',
+    kind='bar',
+    palette=['#23395d', '#8da9c4'],
+    width=0.9,
+    legend=False,
+    errorbar=None,
+    height=5,
+    aspect=1.2,
+)
+g.set_axis_labels('', 'SMAPE')
+g.set_xticklabels(rotation=60, fontsize=13)
+g.set_titles('{col_name}', size=13)
+g.fig.set_size_inches(12, 5)
+g.tight_layout()
+g.savefig('assets/outputs/plot5.pdf', bbox_inches='tight')
+plt.close(g.fig)
 
 # '#152238'
-
-plot.save('assets/outputs/plot5.pdf', width=12, height=5)

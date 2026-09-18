@@ -1,54 +1,159 @@
-from typing import Optional
+from typing import Optional, List, Union
+import hashlib
+import json
+from copy import deepcopy
 
-from neuralforecast.models import (KAN,
-                                   TFT,
+import numpy as np
+import pandas as pd
+from ray.tune.schedulers import ASHAScheduler
+from neuralforecast import NeuralForecast
+from neuralforecast.common._base_auto import RayOptions
+from neuralforecast.losses.pytorch import MAE
+from neuralforecast.auto import (AutoNBEATS,
+                                 AutoTiDE,
+                                 AutoNLinear,
+                                 AutoKAN,
+                                 AutoMLP,
+                                 AutoDLinear,
+                                 AutoNHITS,
+                                 AutoPatchTST,
+                                 AutoTFT,
+                                 AutoDeepNPTS)
+
+from neuralforecast.models import (GRU,
+                                   KAN,
                                    NBEATS,
                                    TiDE,
                                    NLinear,
                                    MLP,
+                                   LSTM,
                                    DLinear,
                                    NHITS,
                                    PatchTST,
-                                   DeepNPTS)
+                                   TFT,
+                                   DeepNPTS,
+                                   DeepAR,
+                                   TCN,
+                                   DilatedRNN)
+
+from src.config_pool_dft import NEURAL_CONFIG_POOL
 
 
-class BaseModelsConfig:
+class ModelsConfig:
+    AUTO_MODEL_CLASSES = {
+        'AutoTFT': AutoTFT,
+        'AutoNBEATS': AutoNBEATS,
+        'AutoTiDE': AutoTiDE,
+        'AutoNLinear': AutoNLinear,
+        'AutoKAN': AutoKAN,
+        'AutoMLP': AutoMLP,
+        'AutoDLinear': AutoDLinear,
+        'AutoNHITS': AutoNHITS,
+        'AutoDeepNPTS': AutoDeepNPTS,
+        'AutoPatchTST': AutoPatchTST,
+    }
+
+    MODEL_CLASSES = {
+        'AutoKAN': KAN,
+        'AutoMLP': MLP,
+        'AutoDLinear': DLinear,
+        'AutoNHITS': NHITS,
+        'AutoDeepNPTS': DeepNPTS,
+        'AutoNBEATS': NBEATS,
+        'AutoTiDE': TiDE,
+        'AutoNLinear': NLinear,
+        'AutoTFT': TFT,
+        'AutoPatchTST': PatchTST,
+        'AutoGRU': GRU,
+        'AutoDeepAR': DeepAR,
+        'AutoLSTM': LSTM,
+        'AutoDilatedRNN': DilatedRNN,
+        'AutoTCN': TCN,
+    }
 
     @classmethod
-    def get_nf_models(cls,
-                      horizon: int,
-                      input_size: int,
-                      try_mps: bool = True,
-                      limit_epochs: bool = False,
-                      limit_val_batches: Optional[int] = None):
+    def get_auto_nf_models(cls,
+                           horizon: int,
+                           n_samples: int,
+                           engine: str = 'cpu',
+                           limit_epochs: bool = False,
+                           limit_val_batches: Optional[int] = None):
 
-        engine = 'mps' if try_mps else 'cpu'
+        models = []
+        for mod_name, mod in cls.AUTO_MODEL_CLASSES.items():
+            config = deepcopy(NEURAL_CONFIG_POOL[mod_name])
+            config['accelerator'] = engine
 
-        config = {
-            'input_size': input_size,
-            'h': horizon,
-            'enable_checkpointing': True,
-            'accelerator': engine}
+            # mod.default_config['accelerator'] = engine
 
-        if limit_epochs:
-            config['max_steps'] = 2
+            if limit_epochs:
+                # mod.default_config['max_steps'] = 2
+                config['max_steps'] = 2
 
-        if limit_val_batches is not None:
-            config['limit_val_batches'] = limit_val_batches
+            if limit_val_batches is not None:
+                # mod.default_config['limit_val_batches'] = limit_val_batches
+                config['limit_val_batches'] = limit_val_batches
 
-        models = [
-            NBEATS(**config),
-            NHITS(**config),
-            MLP(**config),
-            # MLP(**config, num_layers=3),
-            TiDE(**config),
-            KAN(**config),
-            # TimeMixer(**config, n_series = 1),
-            TFT(**config, scaler_type='standard'),
-            NLinear(**config),
-            DLinear(**config),
-            PatchTST(**config),
-            DeepNPTS(**config),
-        ]
+            model_instance = mod(
+                h=horizon,
+                config=config,
+                num_samples=n_samples,
+                alias=mod_name,
+                valid_loss=MAE(),
+                refit_with_val=True,
+                backend="ray",
+                ray_options=RayOptions(
+                    scheduler=ASHAScheduler(
+                        max_t=30,
+                        grace_period=1,
+                        reduction_factor=4,
+                        brackets=1,
+                    )
+                ),
+            )
+
+            models.append(model_instance)
 
         return models
+
+    @staticmethod
+    def get_all_config_results(nf: NeuralForecast):
+
+        scores = []
+        for mod in nf.models:
+            print(f"Model: {mod.alias}")
+            for i, res in enumerate(mod.results):
+                print(res)
+                res.config['learning_rate'] = np.round(res.config['learning_rate'], 5)
+
+                conf_str = {k: str(v) for k, v in res.config.items()}
+                sorted_string = json.dumps(conf_str, sort_keys=True)
+                hash_value = hashlib.md5(sorted_string.encode()).hexdigest()
+
+                try:
+                    scr = {
+                        'model': mod.alias,
+                        'config_idx': i,
+                        'loss': res.metrics['loss'],
+                        'config': res.config,
+                        'hash_value': hash_value
+                    }
+
+                    scores.append(scr)
+                except KeyError:
+                    continue
+
+        return scores
+
+    @classmethod
+    def get_best_configs(cls, nf: Union[NeuralForecast, List]) -> List:
+        if isinstance(nf, List):
+            return cls._get_best_configs_from_folds(nf)
+
+        optim_models = []
+        for mod in nf.models:
+            opm_mod = cls.MODEL_CLASSES[mod.alias](**mod.results.get_best_result().config)
+
+            optim_models.append(opm_mod)
+
+        return optim_models

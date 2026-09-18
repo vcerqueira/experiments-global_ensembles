@@ -36,12 +36,6 @@ if __name__ == '__main__':
     sf = StatsForecast(models=models_sf, freq=freq, n_jobs=1, )
     nf = NeuralForecast(models=models_nf, freq=freq)
 
-    # fazer auto fit
-    # get best
-    # fit best
-    # get insample
-    # run cv with best
-
     # ---- cv forecasts
     n_windows = train['unique_id'].value_counts().min() - n_lags - horizon
     n_windows = int(n_windows // 2)

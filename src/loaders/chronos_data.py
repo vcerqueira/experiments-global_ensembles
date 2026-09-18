@@ -5,22 +5,24 @@ import numpy as np
 import pandas as pd
 from huggingface_hub import dataset_info
 
-from src.loaders.base import DatasetLoader
+from loaders.base import DatasetLoader
 
 
 class ChronosDataset(DatasetLoader):
     # https://github.com/autogluon/fev/blob/main/benchmarks/chronos_zeroshot/results/auto_arima.csv
     # https://github.com/SalesforceAIResearch/gift-eval/blob/main/results/naive/all_results.csv
+    # https://huggingface.co/datasets/autogluon/chronos_datasets
+    # https://github.com/autogluon/fev
 
     DATASET_NAME = 'CHRONOS'
     REPO_ID = 'autogluon/chronos_datasets'
 
     M4_HORIZON_MAP = {
         "Y": 6,
-        "Q": 4,
-        "M": 12,
-        "MS": 12,
-        "ME": 12,
+        "Q": 8,
+        "M": 18,
+        "MS": 18,
+        "ME": 18,
         "W": 13,
         "D": 14,
         "H": 48,
@@ -29,12 +31,11 @@ class ChronosDataset(DatasetLoader):
     HORIZON_MAP = {
         "Y": 3,
         "Q": 4,
-        "QE": 4,
         "M": 12,
         "MS": 12,
         "ME": 12,
         "W": 8,
-        "D": 30,
+        "D": 14,
         "H": 48,
         "T": 48,
         "S": 60,
@@ -42,16 +43,14 @@ class ChronosDataset(DatasetLoader):
 
     SPECIAL_HORIZON_MAP = {
         'monash_m1_monthly': 6,  # time series are too short for 12 or 18
+        'monash_car_parts': 6,  # time series are too short for 12 or 18
         'monash_m1_quarterly': 2,  # time series are too short for 4
         'monash_m1_yearly': 2,  # time series are too short for 2
-        'monash_tourism_yearly': 2,  # time series are too short for 2
-        'm4_yearly': 3,  # time series are too short for 6
     }
 
     FREQUENCY_MAP = {
         "Y": 1,
         "Q": 4,
-        "QE": 4,
         "M": 12,
         "MS": 12,
         "ME": 12,
@@ -62,14 +61,12 @@ class ChronosDataset(DatasetLoader):
         "S": 1,  # ?
     }
 
-    # LAGS_BY_FREQUENCY = {k: int(v * 1.25) for k, v in HORIZON_MAP.items()}
-
     FREQUENCY_MAP_DATASETS = {
         'monash_m1_monthly': 'M',
         'monash_m1_quarterly': 'Q',
         'monash_m1_yearly': 'Y',
         'monash_m3_monthly': 'M',
-        'monash_m3_quarterly': 'QE',
+        'monash_m3_quarterly': 'Q',
         'monash_m3_yearly': 'Y',
         'monash_tourism_monthly': 'M',
         'monash_tourism_quarterly': 'Q',

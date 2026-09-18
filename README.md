@@ -2,6 +2,9 @@
 
 need tp update requirements...upgrade nf, and add datasets, dotenv
 
+need to use automodel. cv and predict should be the same pipeline...
+
+
 This repository contains the code and data for experiments on dynamic 
 ensembles for global time series forecasting.
 
