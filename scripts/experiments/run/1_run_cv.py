@@ -9,7 +9,7 @@ from src.loaders import ChronosDataset, LongHorizonDatasetR
 from src.neuralnets import BaseModelsConfig
 
 
-# merge with 2_ and add insample
+# merge with 2_ and add ins
 
 warnings.filterwarnings("ignore")
 
