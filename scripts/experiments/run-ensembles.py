@@ -37,12 +37,23 @@ def override_ds_and_merge(fcst, trues):
     return fcst.merge(trues, on=['unique_id', 'h']).drop(columns='h')
 
 
+def _align_ds_keys(df):
+    out = df[['unique_id', 'ds']].copy()
+    out['unique_id'] = out['unique_id'].astype(str)
+    out['ds'] = pd.to_datetime(out['ds']).astype('datetime64[ns]')
+    return out.sort_values(['unique_id', 'ds']).reset_index(drop=True)
+
+
 def assert_ds_match(fcst, trues):
-    keys = ['unique_id', 'ds']
-    fcst_keys = fcst[keys].sort_values(keys).reset_index(drop=True)
-    true_keys = trues[keys].sort_values(keys).reset_index(drop=True)
-    if not fcst_keys.equals(true_keys):
+    if not _align_ds_keys(fcst).equals(_align_ds_keys(trues)):
         raise ValueError('Forecast timestamps do not match the test set.')
+
+
+def _harmonize_keys(df):
+    df = df.copy()
+    df['unique_id'] = df['unique_id'].astype(str)
+    df['ds'] = pd.to_datetime(df['ds']).astype('datetime64[ns]')
+    return df
 
 
 def load_dataset(target):
@@ -148,6 +159,8 @@ if __name__ == '__main__':
 
         ensembles_df = pd.DataFrame(ensembles)
         fcst_df = pd.concat([fcst, ensembles_df], axis=1)
+        fcst_df = _harmonize_keys(fcst_df)
+        test = _harmonize_keys(test)
         assert_ds_match(fcst_df, test)
         fcst_df = fcst_df.merge(test, on=['unique_id', 'ds'])
 

@@ -12,7 +12,7 @@ dependencies = [
     "datasets",
     "datasetsforecast",
     "matplotlib",
-    "metaforecast==0.3.3",
+    "metaforecast==0.3.4",
     "neuralforecast==3.2.1",
     "numpy",
     "pandas",
