@@ -30,11 +30,11 @@ else:
 
 DATASETS = [
     'monash_m1_monthly',
-    # 'monash_m1_quarterly',
+    'monash_m1_quarterly',
     # 'monash_m3_monthly',
     # 'monash_m3_quarterly',
-    # 'monash_tourism_monthly',
-    # 'monash_tourism_quarterly',
+    'monash_tourism_monthly',
+    'monash_tourism_quarterly',
     # 'monash_hospital',
     # "ECL",
     # "Exchange",

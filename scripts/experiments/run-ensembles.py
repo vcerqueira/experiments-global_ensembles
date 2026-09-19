@@ -37,6 +37,14 @@ def override_ds_and_merge(fcst, trues):
     return fcst.merge(trues, on=['unique_id', 'h']).drop(columns='h')
 
 
+def assert_ds_match(fcst, trues):
+    keys = ['unique_id', 'ds']
+    fcst_keys = fcst[keys].sort_values(keys).reset_index(drop=True)
+    true_keys = trues[keys].sort_values(keys).reset_index(drop=True)
+    if not fcst_keys.equals(true_keys):
+        raise ValueError('Forecast timestamps do not match the test set.')
+
+
 def load_dataset(target):
     if target in LH_DATASETS:
         _, horizon, n_lags, _, _ = LongHorizonDatasetR.load_everything(target, resample_to='D')
@@ -140,6 +148,7 @@ if __name__ == '__main__':
 
         ensembles_df = pd.DataFrame(ensembles)
         fcst_df = pd.concat([fcst, ensembles_df], axis=1)
-        fcst_df = override_ds_and_merge(fcst_df, test)
+        assert_ds_match(fcst_df, test)
+        fcst_df = fcst_df.merge(test, on=['unique_id', 'ds'])
 
         fcst_df.to_csv(out_fp, index=False)

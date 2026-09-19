@@ -166,7 +166,7 @@ lightning_logs
 
 # Custom
 assets/datasets/
-assets/old/
+assets/old_code/
 assets/papers/
 experiments_extra/
 m3/
