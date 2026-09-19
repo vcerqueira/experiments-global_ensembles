@@ -21,8 +21,8 @@ ENSEMBLE_RESULTS_PATH = Path(__file__).resolve().parents[2] / "assets" / "result
 SCORES_PATH = Path(__file__).resolve().parents[2] / "assets"
 # SCORES_PATH = Path("assets/")
 
-ASPECT_COLS = ["stationarity", "heteroskedasticity"]
-KEY_COLS = ["Dataset", "Data", "Frequency", "unique_id", "Horizon"] + ASPECT_COLS
+ASPECT_COLS = ["stationarity", "heteroskedasticity", "seasonality"]
+KEY_COLS = ["Dataset", "Data", "Frequency", "Weights", "unique_id", "Horizon"] + ASPECT_COLS
 
 
 def _harmonize_keys(df):
@@ -59,9 +59,10 @@ def dataset_labels(target):
     return "_".join(data_parts), freq.capitalize()
 
 
-def tag_series_aspects(cv_df, train):
+def tag_series_aspects(cv_df, train, seas_len):
     stationarity_labels = {}
     het_labels = {}
+    seasonality_labels = {}
     for uid, uid_df in train.groupby("unique_id"):
         y = uid_df["y"]
         try:
@@ -74,10 +75,16 @@ def tag_series_aspects(cv_df, train):
             het_labels[uid] = "Heteroskedastic" if bp_pvalue < 0.05 else "Homoskedastic"
         except Exception:
             het_labels[uid] = "Unknown"
+        try:
+            nsdiffs = DifferencingTests.nsdiffs(y, period=seas_len)
+            seasonality_labels[uid] = "Seasonal" if nsdiffs > 0 else "Non-seasonal"
+        except Exception:
+            seasonality_labels[uid] = "Unknown"
 
     cv_df = cv_df.copy()
     cv_df["stationarity"] = cv_df["unique_id"].map(stationarity_labels).fillna("Unknown")
     cv_df["heteroskedasticity"] = cv_df["unique_id"].map(het_labels).fillna("Unknown")
+    cv_df["seasonality"] = cv_df["unique_id"].map(seasonality_labels).fillna("Unknown")
     return cv_df
 
 
@@ -92,7 +99,7 @@ def uid_scores_with_horizons(radar):
 
 
 def evaluate_forecasts(fcst, train, seas_len):
-    fcst = tag_series_aspects(fcst, train)
+    fcst = tag_series_aspects(fcst, train, seas_len)
     radar = ModelRadar(
         cv_df=fcst,
         metrics=[partial(mase, seasonality=seas_len)],
@@ -109,9 +116,9 @@ if __name__ == "__main__":
     print(ENSEMBLE_RESULTS_PATH.absolute())
 
     scores_by_uid = []
+    weight_tag = "fitted" if USE_TRAINING_LOSS else "cv"
     for target in DATASETS:
         print(f"Evaluating {target}")
-        weight_tag = "fitted" if USE_TRAINING_LOSS else "cv"
         fcst_fp = ENSEMBLE_RESULTS_PATH / f"{target},ensemble-fcst,weights-{weight_tag}.csv"
 
         if not fcst_fp.exists():
@@ -129,6 +136,7 @@ if __name__ == "__main__":
         uid["Dataset"] = target
         uid["Data"] = data
         uid["Frequency"] = frequency
+        uid["Weights"] = weight_tag
         scores_by_uid.append(uid)
 
         n_uid = uid["unique_id"].nunique()
@@ -141,4 +149,4 @@ if __name__ == "__main__":
     scores_uid_df = pd.concat(scores_by_uid, axis=0, ignore_index=True)
     model_cols = [c for c in scores_uid_df.columns if c not in KEY_COLS]
     scores_uid_df = scores_uid_df[KEY_COLS + model_cols]
-    scores_uid_df.to_csv(SCORES_PATH / "scores_uid.csv", index=False)
+    scores_uid_df.to_csv(SCORES_PATH / f"scores_uid,weights-{weight_tag}.csv", index=False)
