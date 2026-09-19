@@ -12,14 +12,13 @@ dependencies = [
     "datasets",
     "datasetsforecast",
     "matplotlib",
-    "metaforecast==0.3.0",
-    "neuralforecast==3.2.0",
+    "metaforecast==0.3.2",
+    "neuralforecast==3.2.1",
     "numpy",
     "pandas",
     "python-dotenv",
     "scikit-learn",
     "seaborn",
-    "setuptools>=68,<81",
     "statsforecast",
 ]
 

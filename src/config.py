@@ -26,3 +26,21 @@ if DRY_RUN:
 else:
     N_SAMPLES = 20
     LIMIT_EPOCHS = False
+
+DATASETS = [
+    'monash_m1_monthly',
+    'monash_m1_quarterly',
+    'monash_m3_monthly',
+    'monash_m3_quarterly',
+    'monash_tourism_monthly',
+    'monash_tourism_quarterly',
+    'monash_hospital',
+    "ECL",
+    "Exchange",
+    "TrafficL",
+    "Weather",
+]
+LH_DATASETS = ["ECL",
+               "Exchange",
+               "TrafficL",
+               "Weather"]
