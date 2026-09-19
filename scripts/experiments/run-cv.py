@@ -22,10 +22,10 @@ if __name__ == '__main__':
         # target = 'monash_m1_monthly'
         print(f"Running {target}")
         base_fp = RESULTS_PATH / f'{target},base-fcst.csv'
-        base_int_fp = RESULTS_PATH / f'{target},base-insampletrain-fcst.csv'
-        base_incv_fp = RESULTS_PATH / f'{target},base-insamplecv-fcst.csv'
+        base_fitted_fp = RESULTS_PATH / f'{target},base-fitted-fcst.csv'
+        base_cv_fp = RESULTS_PATH / f'{target},base-cv-fcst.csv'
 
-        if base_fp.exists() and base_int_fp.exists() and base_incv_fp.exists():
+        if base_fp.exists() and base_fitted_fp.exists() and base_cv_fp.exists():
             continue
 
         if target in LH_DATASETS:
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         fcst_nf_ins = fcst_nf_ins.rename(columns=lambda c: re.sub(r"^Auto", "", c))
         fcst_nf_ins = fcst_nf_ins.groupby(['unique_id', 'cutoff']).head(1).drop(columns='cutoff').reset_index(drop=True)
 
-        fcst_nf_ins.to_csv(base_int_fp, index=False)
+        fcst_nf_ins.to_csv(base_fitted_fp, index=False)
 
         # CV with best configs
         nf_cv = NeuralForecast(models=optim_models, freq=freq)
@@ -79,4 +79,4 @@ if __name__ == '__main__':
                                             step_size=1)
         fcst_cv_nf = fcst_cv_nf.groupby(['unique_id', 'cutoff']).head(1).drop(columns='cutoff').reset_index(drop=True)
 
-        fcst_cv_nf.to_csv(base_incv_fp, index=False)
+        fcst_cv_nf.to_csv(base_cv_fp, index=False)

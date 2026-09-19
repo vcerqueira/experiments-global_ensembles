@@ -13,12 +13,13 @@ def _env_bool(name: str, default: bool) -> bool:
 
 
 DRY_RUN = True
-
-TRIM_R = 0.6
-SEED = 123
 USE_MPS = _env_bool("USE_MPS", True)
 USE_CUDA = _env_bool("USE_CUDA", False)
 ENGINE = "mps" if USE_MPS else ("gpu" if USE_CUDA else "cpu")
+SEED = 123
+
+USE_TRAINING_LOSS = True
+TRIM_R = 0.6
 
 if DRY_RUN:
     N_SAMPLES = 2
@@ -29,16 +30,16 @@ else:
 
 DATASETS = [
     'monash_m1_monthly',
-    'monash_m1_quarterly',
-    'monash_m3_monthly',
-    'monash_m3_quarterly',
-    'monash_tourism_monthly',
-    'monash_tourism_quarterly',
-    'monash_hospital',
-    "ECL",
-    "Exchange",
-    "TrafficL",
-    "Weather",
+    # 'monash_m1_quarterly',
+    # 'monash_m3_monthly',
+    # 'monash_m3_quarterly',
+    # 'monash_tourism_monthly',
+    # 'monash_tourism_quarterly',
+    # 'monash_hospital',
+    # "ECL",
+    # "Exchange",
+    # "TrafficL",
+    # "Weather",
 ]
 LH_DATASETS = ["ECL",
                "Exchange",
