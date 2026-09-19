@@ -12,7 +12,7 @@ def _env_bool(name: str, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "y"}
 
 
-DRY_RUN = True
+DRY_RUN = False
 USE_MPS = _env_bool("USE_MPS", True)
 USE_CUDA = _env_bool("USE_CUDA", False)
 ENGINE = "mps" if USE_MPS else ("gpu" if USE_CUDA else "cpu")
@@ -45,3 +45,5 @@ LH_DATASETS = ["ECL",
                "Exchange",
                "TrafficL",
                "Weather"]
+
+ENSEMBLES = ['ADE','MLpol','MLewa','MLprod','BOA', 'OGD','FS','Ridge','LossOnTrain','BestOnTrain','EqAverage','Windowing','BLAST']
