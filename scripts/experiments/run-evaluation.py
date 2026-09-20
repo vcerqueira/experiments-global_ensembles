@@ -17,9 +17,7 @@ from src.config import DATASETS, LH_DATASETS, USE_TRAINING_LOSS
 warnings.filterwarnings("ignore")
 
 ENSEMBLE_RESULTS_PATH = Path(__file__).resolve().parents[2] / "assets" / "results"
-# ENSEMBLE_RESULTS_PATH = Path("assets/results")
 SCORES_PATH = Path(__file__).resolve().parents[2] / "assets"
-# SCORES_PATH = Path("assets/")
 
 ASPECT_COLS = ["stationarity", "heteroskedasticity", "seasonality"]
 KEY_COLS = ["Dataset", "Data", "Frequency", "Weights", "unique_id", "Horizon"] + ASPECT_COLS
@@ -51,12 +49,41 @@ def load_dataset(target):
     return train, test, horizon, n_lags, freq, seas_len
 
 
+_FREQ_TOKEN_LABELS = {
+    "monthly": "Monthly",
+    "quarterly": "Quarterly",
+    "yearly": "Yearly",
+    "weekly": "Weekly",
+    "daily": "Daily",
+    "hourly": "Hourly",
+}
+_FREQ_CODE_LABELS = {
+    "MS": "Monthly",
+    "ME": "Monthly",
+    "M": "Monthly",
+    "QS": "Quarterly",
+    "QE": "Quarterly",
+    "QE-JAN": "Quarterly",
+    "Q": "Quarterly",
+    "Y": "Yearly",
+    "W": "Weekly",
+    "D": "Daily",
+    "H": "Hourly",
+}
+
+
 def dataset_labels(target):
     if target in LH_DATASETS:
         return target, "Daily"
 
-    *data_parts, freq = target.removeprefix("monash_").split("_")
-    return "_".join(data_parts), freq.capitalize()
+    rest = target.removeprefix("monash_")
+    parts = rest.split("_")
+    if len(parts) > 1 and parts[-1].lower() in _FREQ_TOKEN_LABELS:
+        return "_".join(parts[:-1]), _FREQ_TOKEN_LABELS[parts[-1].lower()]
+
+    # Names with no trailing frequency token, e.g. monash_hospital.
+    freq_code = ChronosDataset.FREQUENCY_MAP_DATASETS.get(target, "")
+    return rest, _FREQ_CODE_LABELS.get(freq_code, freq_code or "Unknown")
 
 
 def tag_series_aspects(cv_df, train, seas_len):

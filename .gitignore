@@ -167,7 +167,8 @@ lightning_logs
 # Custom
 assets/datasets/
 assets/old_code/
-assets/papers/
+assets/paper/
+assets/results_cv
 experiments_extra/
 m3/
 .DS_Store

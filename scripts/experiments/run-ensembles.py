@@ -133,9 +133,11 @@ if __name__ == '__main__':
 
         fcst_cv = pd.read_csv(insample_fp, parse_dates=['ds'])
         fcst = pd.read_csv(base_fp, parse_dates=['ds'])
+        # pandas chunked CSV inference can mix int/str unique_ids when a
+        # numeric-looking id column also contains labels such as "OT" (ECL, TrafficL).
+        train, test, fcst_cv, fcst = map(_harmonize_keys, (train, test, fcst_cv, fcst))
 
-
-        combiners_by_uid, combiners_uncond = make_combiners(freq, n_lags, horizon)
+        combiners_by_uid, combiners_uncond = make_combiners(freq, int(n_lags / 2), horizon)
 
         for k in combiners_by_uid:
             print(k, "Unconditional")
