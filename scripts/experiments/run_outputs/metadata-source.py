@@ -8,6 +8,7 @@ import seaborn as sns
 matplotlib.use('agg')
 
 from src.config import ENSEMBLES
+from src.utils import to_latex_tab
 
 WEIGHT_BY_UID = True
 PLOT_EXTENSION = 'png'
@@ -46,6 +47,23 @@ if order_src.empty:
     order_src = plot_df
 order = order_src.groupby('Model')['MASE'].mean().sort_values().index.tolist()
 plot_df['Model'] = pd.Categorical(plot_df['Model'], categories=order)
+present = [label for label in SOURCES if label in set(plot_df['Metadata'])]
+
+table = (
+    plot_df.groupby(['Model', 'Metadata'], observed=True)['MASE']
+    .mean()
+    .unstack('Metadata')
+    .reindex(index=order, columns=present)
+)
+print(
+    to_latex_tab(
+        table,
+        round_to_n=3,
+        caption='Average MASE by ensemble method and metadata source.',
+        label='tab:metadata_source',
+        mark_second=False,
+    )
+)
 
 sns.set_theme(
     style='whitegrid',
@@ -54,7 +72,6 @@ sns.set_theme(
         'font.serif': ['Georgia', 'Palatino', 'Times New Roman'],
     },
 )
-present = [label for label in SOURCES if label in set(plot_df['Metadata'])]
 fig, ax = plt.subplots(figsize=(12, 5))
 sns.barplot(
     data=plot_df,

@@ -8,6 +8,7 @@ import seaborn as sns
 matplotlib.use('agg')
 
 from src.config import ENSEMBLES
+from src.utils import to_latex_tab
 
 PLOT_EXTENSION = 'png'
 SCORES_FP = Path('assets/scores_uid,weights-fitted.csv')
@@ -30,6 +31,23 @@ plot_df = pd.concat([overall, uid], ignore_index=True)
 
 order = overall.groupby('Model')['MASE'].mean().sort_values().index.tolist()
 plot_df['Model'] = pd.Categorical(plot_df['Model'], categories=order)
+weighting = ['Overall', 'By time series']
+
+table = (
+    plot_df.groupby(['Model', 'Weighting'], observed=True)['MASE']
+    .mean()
+    .unstack('Weighting')
+    .reindex(index=order, columns=weighting)
+)
+print(
+    to_latex_tab(
+        table,
+        round_to_n=3,
+        caption='Average MASE by ensemble method and weighting scheme.',
+        label='tab:uid_effect',
+        mark_second=False,
+    )
+)
 
 sns.set_theme(
     style='whitegrid',
@@ -44,7 +62,7 @@ sns.barplot(
     x='Model',
     y='MASE',
     hue='Weighting',
-    hue_order=['Overall', 'By time series'],
+    hue_order=weighting,
     palette=['#7a1f2b', '#5b7c99'],
     errorbar=None,
     width=0.8,

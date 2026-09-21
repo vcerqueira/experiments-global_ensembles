@@ -8,6 +8,7 @@ import seaborn as sns
 matplotlib.use('agg')
 
 from src.config import ENSEMBLES
+from src.utils import to_latex_tab
 
 WEIGHT_BY_UID = True
 WEIGHTS = 'fitted'
@@ -27,7 +28,6 @@ cv = cv.assign(_h=h)
 first = cv.loc[cv['_h'] == 1]
 last_h = cv.groupby('Dataset')['_h'].transform('max')
 last = cv.loc[cv['_h'].eq(last_h)]
-overall = cv.loc[cv['Horizon'] == 'overall']
 
 
 def to_long(df, label):
@@ -41,7 +41,6 @@ def to_long(df, label):
 
 plot_df = pd.concat(
     [
-        to_long(overall, 'Overall'),
         to_long(first, 'First'),
         to_long(last, 'Last'),
     ],
@@ -49,7 +48,7 @@ plot_df = pd.concat(
 )
 
 order = (
-    plot_df.loc[plot_df['Horizon'] == 'Overall']
+    plot_df.loc[plot_df['Horizon'] == 'Last']
     .groupby('Model')['MASE']
     .mean()
     .sort_values()
@@ -57,6 +56,24 @@ order = (
     .tolist()
 )
 plot_df['Model'] = pd.Categorical(plot_df['Model'], categories=order)
+horizons = ['First', 'Last']
+
+table = (
+    plot_df.groupby(['Model', 'Horizon'], observed=True)['MASE']
+    .mean()
+    .unstack('Horizon')
+    .reindex(index=order, columns=horizons)
+)
+print(
+    to_latex_tab(
+        table,
+        round_to_n=3,
+        caption='Average MASE by ensemble method and forecast horizon.',
+        label='tab:horizon',
+        mark_second=False,
+        axis=0,
+    )
+)
 
 sns.set_theme(
     style='whitegrid',
@@ -70,7 +87,7 @@ g = sns.catplot(
     x='Model',
     y='MASE',
     row='Horizon',
-    row_order=['Overall', 'First', 'Last'],
+    row_order=horizons,
     kind='bar',
     color='#7a1f2b',
     errorbar=None,

@@ -21,6 +21,8 @@ SCORES_PATH = Path(__file__).resolve().parents[2] / "assets"
 
 ASPECT_COLS = ["stationarity", "heteroskedasticity", "seasonality"]
 KEY_COLS = ["Dataset", "Data", "Frequency", "Weights", "unique_id", "Horizon"] + ASPECT_COLS
+# Weather daily series are shorter than a year, so yearly MASE scale is undefined.
+MASE_SEASONALITY_OVERRIDES = {"Weather": 7}
 
 
 def _harmonize_keys(df):
@@ -125,11 +127,12 @@ def uid_scores_with_horizons(radar):
     return pd.concat(parts)
 
 
-def evaluate_forecasts(fcst, train, seas_len):
+def evaluate_forecasts(fcst, train, seas_len, target=None):
     fcst = tag_series_aspects(fcst, train, seas_len)
+    mase_seasonality = MASE_SEASONALITY_OVERRIDES.get(target, seas_len)
     radar = ModelRadar(
         cv_df=fcst,
-        metrics=[partial(mase, seasonality=seas_len)],
+        metrics=[partial(mase, seasonality=mase_seasonality)],
         train_df=train,
     )
     scores = uid_scores_with_horizons(radar)
@@ -159,7 +162,7 @@ if __name__ == "__main__":
         fcst = _harmonize_keys(fcst)
 
         data, frequency = dataset_labels(target)
-        uid = evaluate_forecasts(fcst, train, seas_len)
+        uid = evaluate_forecasts(fcst, train, seas_len, target=target)
         uid["Dataset"] = target
         uid["Data"] = data
         uid["Frequency"] = frequency

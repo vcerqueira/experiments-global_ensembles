@@ -34,14 +34,14 @@ sns.set_theme(
         "font.serif": ["Georgia", "Palatino", "Times New Roman"],
     },
 )
-fig, ax = plt.subplots(figsize=(12, 5))
-sns.violinplot(
+fig, ax = plt.subplots(figsize=(16, 6))
+sns.boxplot(
     data=base_ranks,
     x='variable',
     y='value',
     color='#7a1f2b',
-    inner='quart',
-    cut=0,
+    # inner='quart',
+    # cut=0,
     # linewidth=0.6,
     saturation=0.85,
     ax=ax,

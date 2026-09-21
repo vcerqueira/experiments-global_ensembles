@@ -33,6 +33,7 @@ for aspect, levels in ASPECTS.items():
 table = pd.concat(rows).loc[:, col_order]
 if WEIGHT_BY_UID:
     table.columns = [c.removesuffix('(UID)') for c in table.columns]
+table = table.T
 
 text_tab = to_latex_tab(
     table,
@@ -40,5 +41,6 @@ text_tab = to_latex_tab(
     rotate_cols=True,
     caption='Average MASE by series aspect.',
     label='tab:mase_aspects',
+    axis=0,
 )
 print(text_tab)
